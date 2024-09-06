@@ -155,7 +155,7 @@ bool CLXLyricItem::should_update_dict() {
 }
 
 const wchar_t* CLXLyricItem::GetItemName() const {
-    return g_data.StringRes(IDS_PLUGIN_ITEM_NAME);
+    return L"歌词";
 }
 
 const wchar_t* CLXLyricItem::GetItemId() const {
