@@ -16,7 +16,7 @@ CLXLyricItem::CLXLyricItem() {
     m_fetch_thread = std::thread([this]() {
         while (m_running) {
             fetch_content();  // 周期性地获取歌词
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            std::this_thread::sleep_for(std::chrono::seconds(5));
         }
         });
 }
@@ -81,27 +81,25 @@ void CLXLyricItem::fetch_content() {
             }
         }
     }
-    else {
-        auto func = [&](std::string responseStr) -> void {
-            if (responseStr.find("event") != std::string::npos) {
+    auto func = [&](std::string responseStr) -> void {
+        if (responseStr.find("event") != std::string::npos) {
+            return;
+        }
+        size_t pos1 = responseStr.find("data: \"");
+        size_t pos2 = responseStr.find("\"", pos1 + 7);
+        if (pos1 != std::string::npos && pos2 != std::string::npos) {
+            std::string lyricText = responseStr.substr(pos1 + 7, pos2 - (pos1 + 7));
+            std::wstring lyric = CCommon::StrToUnicode(lyricText.c_str(), true);
+            if (!lyric.empty()) {
+                std::lock_guard<std::mutex> lock(m_cache_mutex);
+                m_cache_content.type = 0;  // 歌词类型
+                handel_lyric(lyric);
                 return;
             }
-            size_t pos1 = responseStr.find("data: \"");
-            size_t pos2 = responseStr.find("\"", pos1 + 7);
-            if (pos1 != std::string::npos && pos2 != std::string::npos) {
-                std::string lyricText = responseStr.substr(pos1 + 7, pos2 - (pos1 + 7));
-                std::wstring lyric = CCommon::StrToUnicode(lyricText.c_str(), true);
-                if (!lyric.empty()) {
-                    std::lock_guard<std::mutex> lock(m_cache_mutex);
-                    m_cache_content.type = 0;  // 歌词类型
-                    handel_lyric(lyric);
-                    return;
-                }
-            }
-        };
+        }
+    };
+    CCommon::ListenSSE(sse_url, func, L"", nullptr, 0);
 
-        CCommon::ListenSSE(sse_url, func, L"", nullptr, 0);
-    }
 
     if (should_update_dict()) {
         // 如果无法获取歌词，则从词典中选择随机词语
@@ -175,7 +173,12 @@ bool CLXLyricItem::select_random_line_from_dict() {
 
 bool CLXLyricItem::should_update_dict() {
     time_t current_time = std::time(nullptr);
-    return difftime(current_time, m_cache_content.last_update_time) > 10;  // 10秒更新周期
+    bool res = m_cache_content.force_update || difftime(current_time, m_cache_content.last_update_time) > 60;// 30秒更新周期
+    if (m_cache_content.force_update) {
+        std::lock_guard<std::mutex> lock(m_cache_mutex);
+        m_cache_content.force_update = false;
+    }
+    return res;
 }
 
 const wchar_t* CLXLyricItem::GetItemName() const {
@@ -211,7 +214,8 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
     CDC* pDC = CDC::FromHandle((HDC)hDC);
     CRect rect(CPoint(x, y), CSize(w, h));
 
-    std::lock_guard<std::mutex> lock(m_cache_mutex);  // 加锁确保安全访问缓存
+    // 加锁确保对 m_cache_content 的访问是安全的
+    std::lock_guard<std::mutex> lock(m_cache_mutex);
 
     // 准备字体
     prepare_fonts(pDC);
@@ -279,8 +283,8 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
                 }
             }
             else {
-                    secondLine = firstLine.substr(breakPos + 1);  // 剩余部分成为第二行
-                    firstLine = firstLine.substr(0, breakPos);
+                secondLine = firstLine.substr(breakPos + 1);  // 剩余部分成为第二行
+                firstLine = firstLine.substr(0, breakPos);
             }
             // 截断第二行并添加 "..."
             int secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;
@@ -306,4 +310,19 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
             pDC->DrawText(firstLine.c_str(), rect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
         }
     }
+}
+
+
+int CLXLyricItem::OnMouseEvent(MouseEventType type, int x, int y, void* hWnd, int flag) 
+{
+    if (type == MT_LCLICKED) {
+        {
+            std::lock_guard<std::mutex> lock(m_cache_mutex);
+            m_cache_content.force_update = true;
+            m_cache_content.first_line.clear();
+            m_cache_content.second_line.clear();
+        }
+        fetch_content();
+    }
+    return 0;
 }

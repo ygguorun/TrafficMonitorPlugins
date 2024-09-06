@@ -14,6 +14,7 @@ struct CacheContent {
     std::wstring second_line;
     int type = 0;
     time_t last_update_time = 0;
+    bool force_update = false;
 };
 
 
@@ -32,6 +33,8 @@ public:
     virtual bool IsCustomDraw() const override;
     virtual int GetItemWidthEx(void* hDC) const override;
     virtual void DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mode) override;
+    virtual int OnMouseEvent(MouseEventType type, int x, int y, void* hWnd, int flag) override;
+
 
 private:
     void fetch_content();  // 线程函数，获取歌词
