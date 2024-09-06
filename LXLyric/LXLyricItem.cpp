@@ -123,7 +123,7 @@ void CLXLyricItem::handel_lyric(std::wstring& text) {
 
 bool CLXLyricItem::select_random_line_from_dict() {
     if (lines.empty()) {
-        std::ifstream file("C:\\Users\\admin\\Desktop\\document\\TrafficMonitorPlugins\\bin\\x64\\Debug\\dict.txt");
+        std::ifstream file("C:\\Users\\admin\\scoop\\persist\\trafficmonitor\\plugins\\dict.txt");
         if (!file.is_open()) {
             std::cerr << "Error: Failed to open file 'dict.txt'" << std::endl;
             return false;
@@ -182,7 +182,7 @@ bool CLXLyricItem::IsCustomDraw() const {
 
 int CLXLyricItem::GetItemWidthEx(void* hDC) const {
     CDC* pDC = CDC::FromHandle((HDC)hDC);
-    return 120;
+    return 121;
 }
 
 void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mode) {
@@ -239,13 +239,13 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
         std::wstring firstLine = m_cache_content.first_line;
         int textWidth = pDC->GetTextExtent(firstLine.c_str()).cx;
 
-        // 如果宽度超出，且文本中没有空格
         if (textWidth > w) {
             std::wstring secondLine;
-            if (firstLine.find(L' ') == std::wstring::npos) {
+            // 如果宽度超出，且文本中没有空格
+            size_t breakPos = firstLine.find(L' '); // 通过空格分割为两行
+            if (breakPos == std::wstring::npos) {
                 size_t i = 0;
                 int currentWidth = 0;
-
                 // 根据rect宽度自动换行
                 for (; i < firstLine.size(); ++i) {
                     currentWidth += pDC->GetTextExtent(firstLine.substr(i, 1).c_str()).cx;
@@ -255,27 +255,14 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
                         break;
                     }
                 }
-
-                // 截断第二行并添加 "..."
-                int secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;
-                if (secondLineWidth > w) {
-                    while (secondLineWidth + pDC->GetTextExtent(L"...").cx > w) {
-                        secondLine.pop_back();
-                        secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;
-                    }
-                    secondLine += L"...";
-                }
-
             }
             else {
-                size_t breakPos = firstLine.find_last_of(L' ', w);  // 通过空格分割为两行
-                if (breakPos != std::wstring::npos) {
                     secondLine = firstLine.substr(breakPos + 1);  // 剩余部分成为第二行
                     firstLine = firstLine.substr(0, breakPos);
-                }
-
-                // 截断第二行并添加 "..."
-                int secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;
+            }
+            // 截断第二行并添加 "..."
+            int secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;
+            if (secondLineWidth > w) {
                 while (secondLineWidth + pDC->GetTextExtent(L"...").cx > w) {
                     secondLine.pop_back();
                     secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;

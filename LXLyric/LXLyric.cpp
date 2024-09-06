@@ -56,9 +56,9 @@ const wchar_t* CLXLyric::GetInfo(PluginInfoIndex index)
     switch (index)
     {
     case TMI_NAME:
-        return g_data.StringRes(IDS_PLUGIN_NAME).GetString();
+        return L"洛雪歌词插件";
     case TMI_DESCRIPTION:
-        return g_data.StringRes(IDS_PLUGIN_DESCRIPTION).GetString();
+        return L"调用洛雪开放 API，通过 TrafficMonitor 显示实时歌词";
     case TMI_AUTHOR:
         //TODO: 在此返回作者的名字
         return L"";
