@@ -16,7 +16,7 @@ CLXLyricItem::CLXLyricItem() {
     m_fetch_thread = std::thread([this]() {
         while (m_running) {
             fetch_content();  // 周期性地获取歌词
-            std::this_thread::sleep_for(std::chrono::microseconds(100));  // 每10秒更新一次
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
         });
 }
@@ -61,24 +61,48 @@ void CLXLyricItem::prepare_fonts(CDC* pDC) {
 
 void CLXLyricItem::fetch_content() {
     std::wstring url = L"http://127.0.0.1:23330/status?filter=lyricLineAllText";
-    std::string responseStr;
+    std::wstring sse_url = L"http://127.0.0.1:23330/subscribe-player-status?filter=lyricLineAllText";
+    
 
-    // 使用 CCommon::GetURL 获取歌词数据
-    if (CCommon::GetURL(url, responseStr, true, L"", L"", 0)) {
-        size_t pos1 = responseStr.find("\"lyricLineAllText\":\"");
-        size_t pos2 = responseStr.find("\"", pos1 + 20);
-        if (pos1 != std::string::npos && pos2 != std::string::npos) {
-            std::string lyricText = responseStr.substr(pos1 + 20, pos2 - (pos1 + 20));
-            std::wstring lyric = CCommon::StrToUnicode(lyricText.c_str(), true);
-            if (!lyric.empty()) {
-                std::lock_guard<std::mutex> lock(m_cache_mutex);
-                m_cache_content.type = 0;  // 歌词类型
-                handel_lyric(lyric);
-                return;
+    if (m_cache_content.first_line.empty()) {
+        std::string responseStr;
+        if (CCommon::GetURL(url, responseStr, true, L"", L"", 0)) {
+            size_t pos1 = responseStr.find("\"lyricLineAllText\":\"");
+            size_t pos2 = responseStr.find("\"", pos1 + 20);
+            if (pos1 != std::string::npos && pos2 != std::string::npos) {
+                std::string lyricText = responseStr.substr(pos1 + 20, pos2 - (pos1 + 20));
+                std::wstring lyric = CCommon::StrToUnicode(lyricText.c_str(), true);
+                if (!lyric.empty()) {
+                    std::lock_guard<std::mutex> lock(m_cache_mutex);
+                    m_cache_content.type = 0;  // 歌词类型
+                    handel_lyric(lyric);
+                    return;
+                }
             }
-            
         }
     }
+    else {
+        auto func = [&](std::string responseStr) -> void {
+            if (responseStr.find("event") != std::string::npos) {
+                return;
+            }
+            size_t pos1 = responseStr.find("data: \"");
+            size_t pos2 = responseStr.find("\"", pos1 + 7);
+            if (pos1 != std::string::npos && pos2 != std::string::npos) {
+                std::string lyricText = responseStr.substr(pos1 + 7, pos2 - (pos1 + 7));
+                std::wstring lyric = CCommon::StrToUnicode(lyricText.c_str(), true);
+                if (!lyric.empty()) {
+                    std::lock_guard<std::mutex> lock(m_cache_mutex);
+                    m_cache_content.type = 0;  // 歌词类型
+                    handel_lyric(lyric);
+                    return;
+                }
+            }
+        };
+
+        CCommon::ListenSSE(sse_url, func, L"", nullptr, 0);
+    }
+
     if (should_update_dict()) {
         // 如果无法获取歌词，则从词典中选择随机词语
         if (select_random_line_from_dict()) {

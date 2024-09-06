@@ -3,6 +3,7 @@
 #include <afxinet.h>    //用于支持使用网络相关的类
 #include <sstream>
 #include "DataManager.h"
+#include <functional>
 
 std::wstring CCommon::StrToUnicode(const char* str, bool utf8)
 {
@@ -82,6 +83,65 @@ bool CCommon::GetURL(const std::wstring& url, std::string& result, bool utf8, LP
     SAFE_DELETE(pSession);
     return succeed;
 }
+bool CCommon::ListenSSE(const std::wstring & url, std::function<void(const std::string&)> onMessage, LPCTSTR user_agent, LPCTSTR headers, DWORD dwHeadersLength)
+    {
+        bool succeed{ false };
+        CInternetSession* pSession{};
+        CHttpFile* pfile{};
+        try
+        {
+            pSession = new CInternetSession(user_agent);
+            pfile = (CHttpFile*)pSession->OpenURL(url.c_str(), 1, INTERNET_FLAG_TRANSFER_ASCII | INTERNET_FLAG_RELOAD, headers, dwHeadersLength);
+
+            DWORD dwStatusCode;
+            pfile->QueryInfoStatusCode(dwStatusCode);
+            if (dwStatusCode == HTTP_STATUS_OK)
+            {
+                CString data;
+                std::string sseBuffer; // 用于存储 SSE 数据
+
+                // 持续读取 SSE 事件，SSE 事件以 \n\n 结束
+                while (pfile->ReadString(data))
+                {
+                    std::string line = (const char*)data.GetString();
+                    sseBuffer += line + "\n";  // 每一行加上换行符
+
+                    // 如果检测到 \n\n（表示一个 SSE 事件结束）
+                    if (sseBuffer.find("\n\n") != std::string::npos)
+                    {
+                        // 处理收到的 SSE 事件
+                        onMessage(sseBuffer);
+
+                        // 清空缓存，准备接收下一个 SSE 事件
+                        sseBuffer.clear();
+                    }
+                }
+
+                succeed = true;
+            }
+
+            pfile->Close();
+            delete pfile;
+            pSession->Close();
+        }
+        catch (CInternetException* e)
+        {
+            CCommon::WriteLog(L"request fail!", g_data.m_log_path.c_str());
+            if (pfile != nullptr)
+            {
+                pfile->Close();
+                delete pfile;
+            }
+            if (pSession != nullptr)
+                pSession->Close();
+            succeed = false;
+            e->Delete();  // 避免内存泄露
+            SAFE_DELETE(pSession);
+        }
+        SAFE_DELETE(pSession);
+        return succeed;
+    }
+
 
 std::wstring CCommon::URLEncode(const std::wstring& wstr)
 {

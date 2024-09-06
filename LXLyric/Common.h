@@ -5,6 +5,7 @@
 #include <string.h>
 #include <atltime.h>
 #include <vector>
+#include <functional>
 
 using namespace::std;
 // Log0("这是调试信息！\n")
@@ -63,6 +64,9 @@ public:
 
     //获取URL的内容
     static bool GetURL(const std::wstring& url, std::string& result, bool utf8 = false, LPCTSTR pstrAgent = NULL, const LPCTSTR headers = NULL, DWORD dwHeadersLength = 0);
+
+    static bool ListenSSE(const std::wstring& url, std::function<void(const std::string&)> onMessage, LPCTSTR user_agent, LPCTSTR headers, DWORD dwHeadersLength);
+
 
     //将一个字符串转换成URL编码（以UTF8编码格式）
     static std::wstring URLEncode(const std::wstring& wstr);
