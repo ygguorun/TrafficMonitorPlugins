@@ -258,11 +258,13 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
 
                 // 截断第二行并添加 "..."
                 int secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;
-                while (secondLineWidth + pDC->GetTextExtent(L"...").cx > w) {
-                    secondLine.pop_back();
-                    secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;
+                if (secondLineWidth > w) {
+                    while (secondLineWidth + pDC->GetTextExtent(L"...").cx > w) {
+                        secondLine.pop_back();
+                        secondLineWidth = pDC->GetTextExtent(secondLine.c_str()).cx;
+                    }
+                    secondLine += L"...";
                 }
-                secondLine += L"...";
 
             }
             else {
