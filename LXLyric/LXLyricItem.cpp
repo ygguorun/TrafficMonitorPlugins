@@ -41,24 +41,22 @@ std::wstring CLXLyricItem::Utf8ToWstring(const std::string& utf8Str) {
 }
 
 void CLXLyricItem::prepare_fonts(CDC* pDC) {
-    if (!m_cache_content.regular_font) {
-        // 分配内存用于常规字体
-        m_cache_content.regular_font = new CFont();
-        m_cache_content.smaller_font = new CFont();
-
+    if (!regular_font.GetSafeHandle()) {
         // 获取当前字体
         CFont* pOldFont = pDC->GetCurrentFont();
         LOGFONT logfont;
         pOldFont->GetLogFont(&logfont);
 
         // 创建常规字体
-        m_cache_content.regular_font->CreateFontIndirect(&logfont);
+        regular_font.CreateFontIndirect(&logfont);
 
         // 创建小字号字体
         logfont.lfHeight += 2;  // 将字号减小2
-        m_cache_content.smaller_font->CreateFontIndirect(&logfont);
+        smaller_font.CreateFontIndirect(&logfont);
     }
 }
+
+
 
 
 void CLXLyricItem::fetch_content() {
@@ -212,13 +210,13 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
             firstLine += L"...";  // 添加 "..."
         }
 
-        pDC->SelectObject(&m_cache_content.regular_font);
+        pDC->SelectObject(regular_font);
         pDC->DrawText(firstLine.c_str(), firstRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 
         // 第二行文本处理
         std::wstring secondLine = m_cache_content.second_line;
         if (m_cache_content.special_type) {
-            pDC->SelectObject(&m_cache_content.smaller_font);
+            pDC->SelectObject(smaller_font);
         }
 
         if (pDC->GetTextExtent(secondLine.c_str()).cx > w) {
@@ -232,7 +230,7 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
         pDC->DrawText(secondLine.c_str(), secondRect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 
         // 恢复原字体
-        pDC->SelectObject(&m_cache_content.regular_font);
+        pDC->SelectObject(regular_font);
     }
     else {
         // 单行情况
