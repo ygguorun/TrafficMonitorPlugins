@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
+# Visual Studio Version 16
 VisualStudioVersion = 16.0.0.0
 MinimumVisualStudioVersion = 16.0.0.0
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Weather", "Weather\Weather.vcxproj", "{8B13549B-65D4-424A-BC2F-F9CD1441AC5F}"
@@ -30,6 +30,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginTester", "PluginTeste
 	ProjectSection(ProjectDependencies) = postProject
 		{FC324049-5EF6-4561-ABC6-D2FDD68A8768} = {FC324049-5EF6-4561-ABC6-D2FDD68A8768}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LXLyric", "LXLyric\LXLyric.vcxproj", "{8E84C688-6640-4851-BEA6-5D85691D5CBB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,6 +105,14 @@ Global
 		{04D8EB84-0597-435B-8468-79B7BFBAF0AC}.Release|x64.Build.0 = Release|x64
 		{04D8EB84-0597-435B-8468-79B7BFBAF0AC}.Release|x86.ActiveCfg = Release|Win32
 		{04D8EB84-0597-435B-8468-79B7BFBAF0AC}.Release|x86.Build.0 = Release|Win32
+		{8E84C688-6640-4851-BEA6-5D85691D5CBB}.Debug|x64.ActiveCfg = Debug|x64
+		{8E84C688-6640-4851-BEA6-5D85691D5CBB}.Debug|x64.Build.0 = Debug|x64
+		{8E84C688-6640-4851-BEA6-5D85691D5CBB}.Debug|x86.ActiveCfg = Debug|Win32
+		{8E84C688-6640-4851-BEA6-5D85691D5CBB}.Debug|x86.Build.0 = Debug|Win32
+		{8E84C688-6640-4851-BEA6-5D85691D5CBB}.Release|x64.ActiveCfg = Release|x64
+		{8E84C688-6640-4851-BEA6-5D85691D5CBB}.Release|x64.Build.0 = Release|x64
+		{8E84C688-6640-4851-BEA6-5D85691D5CBB}.Release|x86.ActiveCfg = Release|Win32
+		{8E84C688-6640-4851-BEA6-5D85691D5CBB}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
