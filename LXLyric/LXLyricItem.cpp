@@ -74,7 +74,7 @@ void CLXLyricItem::fetch_content() {
                 std::wstring lyric = CCommon::StrToUnicode(lyricText.c_str(), true);
                 if (!lyric.empty()) {
                     std::lock_guard<std::mutex> lock(m_cache_mutex);
-                    m_cache_content.type = 0;  // 歌词类型
+                    m_cache_content.type = ContentType::Lyric;  // 歌词类型
                     handel_lyric(lyric);
                     return;
                 }
@@ -92,7 +92,7 @@ void CLXLyricItem::fetch_content() {
             std::wstring lyric = CCommon::StrToUnicode(lyricText.c_str(), true);
             if (!lyric.empty()) {
                 std::lock_guard<std::mutex> lock(m_cache_mutex);
-                m_cache_content.type = 0;  // 歌词类型
+                m_cache_content.type = ContentType::Lyric;  // 歌词类型
                 handel_lyric(lyric);
                 return;
             }
@@ -105,7 +105,7 @@ void CLXLyricItem::fetch_content() {
         // 如果无法获取歌词，则从词典中选择随机词语
         if (select_random_line_from_dict()) {
             std::lock_guard<std::mutex> lock(m_cache_mutex);
-            m_cache_content.type = 1;  // word 类型
+            m_cache_content.type = ContentType::Word;  // word 类型
             m_cache_content.multi_line = true;
             m_cache_content.special_type = false; 
             m_cache_content.last_update_time = std::time(nullptr);
@@ -114,7 +114,7 @@ void CLXLyricItem::fetch_content() {
 }
 
 void CLXLyricItem::handel_lyric(std::wstring& text) {
-    m_cache_content.type = 0;
+    m_cache_content.type = ContentType::Lyric;
     std::vector<std::wstring> lines;
     size_t pos = 0, found;
     while ((found = text.find(L"\\n", pos)) != std::wstring::npos) {
@@ -325,14 +325,43 @@ void CLXLyricItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mod
 
 int CLXLyricItem::OnMouseEvent(MouseEventType type, int x, int y, void* hWnd, int flag) 
 {
-    if (type == MT_LCLICKED) {
-        {
-            std::lock_guard<std::mutex> lock(m_cache_mutex);
-            m_cache_content.force_update = true;
-            m_cache_content.first_line.clear();
-            m_cache_content.second_line.clear();
+    // 左键：word 切换， 歌词 暂停； 右键：下一曲； 双击：上一曲
+    switch (m_cache_content.type)
+    {
+    case ContentType::Word:
+        switch (type) {
+        case MT_LCLICKED:
+        case MT_RCLICKED:
+            {
+                std::lock_guard<std::mutex> lock(m_cache_mutex);
+                m_cache_content.force_update = true;
+                m_cache_content.first_line.clear();
+                m_cache_content.second_line.clear();
+            }
+            fetch_content();
+        default:
+            break;
         }
-        fetch_content();
+        return 1;
+    case ContentType::Lyric:
+        switch (type) {
+        case MT_LCLICKED:
+            CCommon::GetSchemeUrl(L"lxmusic://player/togglePlay");
+            break;
+        case MT_RCLICKED:
+            CCommon::GetSchemeUrl(L"lxmusic://player/skipNext");
+            break;
+        case MT_DBCLICKED:
+            CCommon::GetSchemeUrl(L"lxmusic://player/skipPrev");
+            CCommon::GetSchemeUrl(L"lxmusic://player/togglePlay");
+            break;
+        default:
+            break;
+        }
+        return 1;
+    default:
+        break;
     }
+     
     return 0;
 }

@@ -4,6 +4,7 @@
 #include <sstream>
 #include "DataManager.h"
 #include <functional>
+#include <windows.h>
 
 std::wstring CCommon::StrToUnicode(const char* str, bool utf8)
 {
@@ -83,6 +84,12 @@ bool CCommon::GetURL(const std::wstring& url, std::string& result, bool utf8, LP
     SAFE_DELETE(pSession);
     return succeed;
 }
+bool CCommon::GetSchemeUrl(const std::wstring& url)
+{
+    HINSTANCE result = ShellExecute(nullptr, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    return reinterpret_cast<int>(result) > 32; // 返回值大于32表示成功
+}
+
 bool CCommon::ListenSSE(const std::wstring & url, std::function<void(const std::string&)> onMessage, LPCTSTR user_agent, LPCTSTR headers, DWORD dwHeadersLength)
     {
         bool succeed{ false };

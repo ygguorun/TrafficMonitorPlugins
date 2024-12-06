@@ -28,8 +28,18 @@ IPluginItem* CLXLyric::GetItem(int index)
 
 const wchar_t* CLXLyric::GetTooltipInfo()
 {
+    switch (m_item.m_cache_content.type) {
+    case ContentType::Lyric:
+        break;
+    case ContentType::Word: {
+        // 拼接 first_line 和 second_line，并加上换行符
+        m_tooltip_info = m_item.m_cache_content.first_line + L"\r\n" + m_item.m_cache_content.second_line;
+        return m_tooltip_info.c_str();
+    }
+    }
     return m_tooltip_info.c_str();
 }
+
 
 void CLXLyric::DataRequired()
 {

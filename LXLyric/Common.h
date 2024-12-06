@@ -65,6 +65,8 @@ public:
     //获取URL的内容
     static bool GetURL(const std::wstring& url, std::string& result, bool utf8 = false, LPCTSTR pstrAgent = NULL, const LPCTSTR headers = NULL, DWORD dwHeadersLength = 0);
 
+    static bool GetSchemeUrl(const std::wstring& url);
+
     static bool ListenSSE(const std::wstring& url, std::function<void(const std::string&)> onMessage, LPCTSTR user_agent, LPCTSTR headers, DWORD dwHeadersLength);
 
 

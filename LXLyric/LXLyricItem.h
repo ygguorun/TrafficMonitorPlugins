@@ -7,12 +7,17 @@
 #include <mutex>
 #include <ctime>
 
+enum class ContentType {
+    Lyric,  // 歌词
+    Word    // 单词
+};
+
 struct CacheContent {
     bool multi_line = false;
     bool special_type = false;
     std::wstring first_line;
     std::wstring second_line;
-    int type = 0;
+    ContentType type = ContentType::Lyric;
     time_t last_update_time = 0;
     bool force_update = false;
 };
@@ -36,7 +41,7 @@ public:
     virtual int OnMouseEvent(MouseEventType type, int x, int y, void* hWnd, int flag) override;
 
 
-private:
+public:
     void fetch_content();  // 线程函数，获取歌词
     void handel_lyric(std::wstring& text);
     std::wstring Utf8ToWstring(const std::string& utf8Str);
